@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0c0f">
+<title>Conch & Cmdr</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --conch:#0ff4c6;--cmdr:#ff4f5e;--gold:#ffc832;--beta-c:#34d399;--beta-r:#a78bfa;
+  --bg:#0b0c0f;--surface:#13151a;--surface2:#1a1d24;--surface3:#20242e;
+  --border:rgba(255,255,255,0.07);--text:#e8eaf0;--muted:#6b7280;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-top:env(safe-area-inset-top,0px);
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;flex-direction:column}
+
+/* ── TOP BAR ── */
+.topbar{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(var(--safe-top) + .75rem) 1.2rem .75rem;
+  background:rgba(11,12,15,.95);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;min-height:56px;
+}
+.topbar-logo{font-size:1rem;font-weight:800;letter-spacing:-.02em;display:flex;gap:.3em;align-items:center}
+.topbar-logo .c{color:var(--conch)}.topbar-logo .r{color:var(--cmdr)}.topbar-logo .s{color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:.5rem}
+.theme-toggle{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:.35rem;border-radius:8px;color:var(--muted);transition:color .2s}
+.theme-toggle:hover{color:var(--text)}
+
+/* ── SCROLL AREA ── */
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* ── VIEWS ── */
+.view{display:none;animation:viewIn .25s ease}
+.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  flex-shrink:0;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  background:rgba(11,12,15,.97);backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  padding-bottom:var(--safe-bottom);
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.75rem .5rem;cursor:pointer;transition:all .2s;border:none;background:none;color:var(--muted);font-family:var(--mono);font-size:.62rem;letter-spacing:.04em;position:relative}
+.nav-item.active{color:var(--conch)}
+.nav-item.active::after{content:'';position:absolute;bottom:0;left:25%;right:25%;height:2px;background:var(--conch);border-radius:2px 2px 0 0}
+.nav-item-icon{font-size:1.3rem;transition:transform .2s}
+.nav-item:active .nav-item-icon{transform:scale(.85)}
+
+/* ── SECTION PADDING ── */
+.section{padding:1.2rem 1rem 5rem}
+
+/* ── SEARCH ── */
+.search-bar{position:relative;margin-bottom:1rem}
+.search-bar input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--mono);font-size:.82rem;padding:.7rem 1rem .7rem 2.4rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.search-bar input:focus{border-color:rgba(15,244,198,.35)}
+.search-bar input::placeholder{color:var(--muted);opacity:.5}
+.search-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
+
+/* ── SECTION HEADER ── */
+.sec-head{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;padding-top:.4rem}
+.sec-head h2{font-size:1.1rem;font-weight:800;letter-spacing:-.02em}
+.sec-head h2.c{color:var(--conch)}.sec-head h2.r{color:var(--cmdr)}
+.sec-head h2.bc{color:var(--beta-c)}.sec-head h2.br{color:var(--beta-r)}
+.sec-badge{font-family:var(--mono);font-size:.58rem;padding:.2rem .5rem;border-radius:4px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted)}
+.sec-divider{height:1px;background:var(--border);margin:1.2rem 0}
+
+/* ── FILE CARD ── */
+.file-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:.75rem;transition:border-color .2s}
+.file-card-main{display:flex;align-items:center;gap:.85rem;padding:.9rem}
+.file-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.file-icon.c{background:rgba(15,244,198,.1);border:1px solid rgba(15,244,198,.2)}
+.file-icon.r{background:rgba(255,79,94,.1);border:1px solid rgba(255,79,94,.2)}
+.file-icon.bc{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2)}
+.file-icon.br{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2)}
+.file-info{flex:1;min-width:0}
+.file-name{font-family:var(--mono);font-size:.78rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.2rem}
+.file-meta{font-family:var(--mono);font-size:.65rem;color:var(--muted);display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.file-ver{font-family:var(--mono);font-size:.6rem;padding:.1rem .35rem;border-radius:3px}
+.file-ver.c{background:rgba(15,244,198,.1);color:var(--conch)}
+.file-ver.r{background:rgba(255,79,94,.1);color:var(--cmdr)}
+.file-ver.bc{background:rgba(52,211,153,.1);color:var(--beta-c)}
+.file-ver.br{background:rgba(167,139,250,.1);color:var(--beta-r)}
+.badge-new{font-family:var(--mono);font-size:.55rem;padding:.1rem .35rem;border-radius:3px;background:rgba(255,200,50,.12);color:var(--gold);border:1px solid rgba(255,200,50,.25)}
+.badge-beta{font-family:var(--mono);font-size:.55rem;padding:.1rem .35rem;border-radius:3px;background:rgba(167,139,250,.1);color:var(--beta-r);border:1px solid rgba(167,139,250,.2)}
+.dl-btn{flex-shrink:0;font-family:var(--mono);font-size:.72rem;padding:.5rem .9rem;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;gap:.3rem;transition:all .15s;font-weight:600}
+.dl-btn.c{background:rgba(15,244,198,.12);color:var(--conch)}.dl-btn.c:active{background:rgba(15,244,198,.22)}
+.dl-btn.r{background:rgba(255,79,94,.1);color:var(--cmdr)}.dl-btn.r:active{background:rgba(255,79,94,.2)}
+.dl-btn.bc{background:rgba(52,211,153,.1);color:var(--beta-c)}.dl-btn.bc:active{background:rgba(52,211,153,.2)}
+.dl-btn.br{background:rgba(167,139,250,.1);color:var(--beta-r)}.dl-btn.br:active{background:rgba(167,139,250,.2)}
+.dl-progress{height:2px;background:var(--surface2)}
+.dl-bar{height:100%;width:0%;transition:width .15s linear}
+.dl-bar.c{background:var(--conch)}.dl-bar.r{background:var(--cmdr)}.dl-bar.bc{background:var(--beta-c)}.dl-bar.br{background:var(--beta-r)}
+
+/* ── SKELETON ── */
+.skel-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.9rem;margin-bottom:.75rem;display:flex;gap:.85rem;align-items:center}
+.skel{background:linear-gradient(90deg,var(--surface2) 25%,rgba(255,255,255,.04) 50%,var(--surface2) 75%);background-size:200% 100%;animation:sh 1.4s infinite;border-radius:6px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-family:var(--mono);font-size:.8rem;opacity:.6}
+.empty-icon{font-size:2rem;margin-bottom:.5rem;display:block}
+
+/* ── CHANGELOG ── */
+.cl-item{display:flex;gap:.85rem;margin-bottom:1.2rem;position:relative}
+.cl-item::before{content:'';position:absolute;left:15px;top:32px;bottom:-12px;width:1px;background:var(--border)}
+.cl-item:last-child::before{display:none}
+.cl-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;position:relative;z-index:1;background:var(--surface);border:1px solid var(--border)}
+.cl-dot.dc{border-color:rgba(15,244,198,.4);background:rgba(15,244,198,.08)}
+.cl-dot.dr{border-color:rgba(255,79,94,.4);background:rgba(255,79,94,.08)}
+.cl-dot.dbc{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.cl-dot.dbr{border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.08)}
+.cl-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;min-width:0}
+.cl-card.tc{border-left:3px solid rgba(15,244,198,.4)}
+.cl-card.tr{border-left:3px solid rgba(255,79,94,.4)}
+.cl-card.tbc{border-left:3px solid rgba(52,211,153,.4)}
+.cl-card.tbr{border-left:3px solid rgba(167,139,250,.4)}
+.cl-head{padding:.75rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+.cl-title-row{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.cl-ver{font-family:var(--mono);font-size:.8rem;font-weight:700}
+.cl-type{font-family:var(--mono);font-size:.58rem;padding:.15rem .45rem;border-radius:4px}
+.cl-type.c{background:rgba(15,244,198,.1);color:var(--conch);border:1px solid rgba(15,244,198,.2)}
+.cl-type.r{background:rgba(255,79,94,.1);color:var(--cmdr);border:1px solid rgba(255,79,94,.2)}
+.cl-type.bc{background:rgba(52,211,153,.1);color:var(--beta-c);border:1px solid rgba(52,211,153,.2)}
+.cl-type.br{background:rgba(167,139,250,.1);color:var(--beta-r);border:1px solid rgba(167,139,250,.2)}
+.cl-date{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.cl-assets{padding:0 .9rem .75rem;display:flex;flex-wrap:wrap;gap:.35rem}
+.cl-asset{font-family:var(--mono);font-size:.65rem;padding:.2rem .5rem;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:color .2s;display:inline-flex;align-items:center;gap:.2rem}
+.cl-asset:active{color:var(--conch)}
+.cl-notes-btn{display:flex;align-items:center;gap:.3rem;width:100%;padding:.5rem .9rem;background:none;border:none;border-top:1px solid var(--border);cursor:pointer;font-family:var(--mono);font-size:.68rem;color:var(--muted);text-align:left;transition:color .2s}
+.cl-notes-btn:active{color:var(--text)}
+.cl-notes-body{overflow:hidden;max-height:0;transition:max-height .3s ease}
+.cl-notes-body.open{max-height:300px}
+.cl-notes-inner{padding:.75rem .9rem;border-top:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--muted);line-height:1.8;white-space:pre-wrap;word-break:break-word}
+
+/* ── BUG REPORT ── */
+.br-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.2rem;margin-bottom:1rem}
+.br-title{font-size:1.1rem;font-weight:800;margin-bottom:.3rem}
+.br-sub{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6}
+.br-field{margin-bottom:.9rem}
+.br-label{font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem;display:block}
+.br-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:.8rem;padding:.7rem .9rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.br-input:focus{border-color:rgba(15,244,198,.35)}
+.br-input::placeholder{color:var(--muted);opacity:.45}
+textarea.br-input{min-height:100px;resize:none;line-height:1.6}
+.br-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:.8rem;padding:.7rem .9rem;outline:none;-webkit-appearance:none;cursor:pointer}
+.br-submit{width:100%;font-family:var(--mono);font-size:.82rem;font-weight:700;padding:.8rem;border-radius:10px;border:none;cursor:pointer;background:rgba(15,244,198,.12);color:var(--conch);border:1px solid rgba(15,244,198,.28);transition:all .2s;margin-top:.5rem}
+.br-submit:active{background:rgba(15,244,198,.22)}
+.br-submit:disabled{opacity:.4;cursor:not-allowed}
+.br-err{font-family:var(--mono);font-size:.72rem;color:var(--cmdr);background:rgba(255,79,94,.07);border:1px solid rgba(255,79,94,.2);border-radius:8px;padding:.6rem .85rem;margin-top:.75rem;display:none}
+.br-err.vis{display:block}
+.br-ok{font-family:var(--mono);font-size:.72rem;color:var(--conch);background:rgba(15,244,198,.07);border:1px solid rgba(15,244,198,.2);border-radius:8px;padding:.6rem .85rem;margin-top:.75rem;display:none}
+.br-ok.vis{display:block}
+
+/* ── TOAST ── */
+#toast-c{position:fixed;bottom:calc(70px + var(--safe-bottom));left:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+.toast{display:flex;align-items:center;gap:.6rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;font-family:var(--mono);font-size:.74rem;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.5);animation:tIn .25s ease;position:relative;overflow:hidden}
+.toast.out{opacity:0;transform:translateY(8px);transition:all .25s}
+@keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.tbar{position:absolute;bottom:0;left:0;height:2px;animation:tb linear forwards}
+@keyframes tb{from{width:100%}to{width:0%}}
+
+/* ── LIGHT MODE ── */
+:root.light-mode{--bg:#f5f7fa;--surface:#fff;--surface2:#f0f2f5;--surface3:#e8ebf0;--border:rgba(0,0,0,0.08);--text:#1a1d24;--muted:#6b7280}
+:root.light-mode .topbar,:root.light-mode .bottom-nav{background:rgba(245,247,250,.97)}
+</style>
+</head>
+<body>
+
+<div id="toast-c"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <span class="c">Conch</span><span class="s">/</span><span class="r">Cmdr</span>
+  </div>
+  <div class="topbar-right">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙</button>
+  </div>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scroll-area">
+
+  <!-- ══ DOWNLOADS VIEW ══ -->
+  <div class="view active" id="view-downloads">
+    <div class="section">
+
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search files..." oninput="doSearch(this.value)" id="search-input">
+      </div>
+
+      <!-- CONCH -->
+      <div class="sec-head"><h2 class="c">Conch</h2><span class="sec-badge" id="badge-conch">—</span></div>
+      <div id="conch-list"><div class="skel-card" id="sk-c1"><div class="skel" style="width:40px;height:40px;border-radius:10px;flex-shrink:0"></div><div style="flex:1"><div class="skel" style="height:12px;width:60%;margin-bottom:8px"></div><div class="skel" style="height:10px;width:40%"></div></div></div></div>
+
+      <div class="sec-divider"></div>
+
+      <!-- CMDR -->
+      <div class="sec-head"><h2 class="r">Cmdr</h2><span class="sec-badge" id="badge-cmdr">—</span></div>
+      <div id="cmdr-list"><div class="skel-card" id="sk-r1"><div class="skel" style="width:40px;height:40px;border-radius:10px;flex-shrink:0"></div><div style="flex:1"><div class="skel" style="height:12px;width:60%;margin-bottom:8px"></div><div class="skel" style="height:10px;width:40%"></div></div></div></div>
+
+      <!-- CONCH BETA -->
+      <div id="conch-beta-section" style="display:none">
+        <div class="sec-divider"></div>
+        <div class="sec-head"><h2 class="bc">🧪 Conch Beta</h2><span class="sec-badge">Unstable</span></div>
+        <div id="conch-beta-list"></div>
+      </div>
+
+      <!-- CMDR BETA -->
+      <div id="cmdr-beta-section" style="display:none">
+        <div class="sec-divider"></div>
+        <div class="sec-head"><h2 class="br">🔬 Cmdr Beta</h2><span class="sec-badge">Unstable</span></div>
+        <div id="cmdr-beta-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ CHANGELOG VIEW ══ -->
+  <div class="view" id="view-changelog">
+    <div class="section">
+      <div class="sec-head" style="margin-bottom:1.2rem"><h2 style="color:var(--text)">Changelog</h2></div>
+      <div id="changelog-list"><div class="skel" style="height:80px;margin-bottom:.75rem;border-radius:12px"></div><div class="skel" style="height:80px;margin-bottom:.75rem;border-radius:12px"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ BUG REPORT VIEW ══ -->
+  <div class="view" id="view-bug">
+    <div class="section">
+      <div class="br-card">
+        <div class="br-title">🐛 Report a Bug</div>
+        <div class="br-sub">Found something broken? Let us know and we'll fix it.</div>
+
+        <div class="br-field">
+          <label class="br-label">Category</label>
+          <select class="br-select" id="br-cat">
+            <option value="download">Download Issue</option>
+            <option value="ui">UI / Visual Bug</option>
+            <option value="crash">Crash / Error</option>
+            <option value="performance">Performance</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="br-field">
+          <label class="br-label">Title</label>
+          <input class="br-input" id="br-title" type="text" placeholder="Short description of the bug" maxlength="100">
+        </div>
+
+        <div class="br-field">
+          <label class="br-label">Description</label>
+          <textarea class="br-input" id="br-desc" placeholder="What happened? What did you expect? Steps to reproduce..." maxlength="1000"></textarea>
+        </div>
+
+        <div class="br-field">
+          <label class="br-label">Your Name (optional)</label>
+          <input class="br-input" id="br-name" type="text" placeholder="Anonymous" maxlength="40">
+        </div>
+
+        <button class="br-submit" id="br-submit" onclick="submitBug()">📤 Send Report</button>
+        <div class="br-err" id="br-err"></div>
+        <div class="br-ok" id="br-ok">✓ Report sent! Thanks for helping improve Conch & Cmdr.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="nav-downloads" onclick="switchView('downloads')">
+    <span class="nav-item-icon">⬇️</span>
+    DOWNLOADS
+  </button>
+  <button class="nav-item" id="nav-changelog" onclick="switchView('changelog')">
+    <span class="nav-item-icon">📋</span>
+    CHANGELOG
+  </button>
+  <button class="nav-item" id="nav-bug" onclick="switchView('bug')">
+    <span class="nav-item-icon">🐛</span>
+    BUG REPORT
+  </button>
+</div>
+
+<script>
+const GITHUB_REPO='Systems-Download/Systems-Download.github.io';
+const SB_URL='https://rmdkoauibmzhgnvrwhfd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZGtvYXVpYm16aGdudnJ3aGZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjg2MDksImV4cCI6MjA5Mzg0NDYwOX0.lu6T00f9y9-Q8HhVag-MGjJz6bTlJrYUwC7AApIxaFw';
+const DISCORD_WEBHOOK='https://discord.com/api/webhooks/1510446146458353747/pnX8TWoZRQsPb9zK5UY5XK1jET80JB9r-DvafMdDVAauLRKCCvGPUha_SvkmtLcoG31p';
+
+let _cc=[],_cr=[],_ccb=[],_crb=[];
+let _uid=0;
+
+/* ── THEME ── */
+function toggleTheme(){
+  const root=document.documentElement,btn=document.getElementById('theme-btn');
+  const isDark=!root.classList.contains('light-mode');
+  if(isDark){root.classList.add('light-mode');btn.textContent='☀️';localStorage.setItem('cc_theme','light');}
+  else{root.classList.remove('light-mode');btn.textContent='🌙';localStorage.setItem('cc_theme','dark');}
+}
+(function(){const s=localStorage.getItem('cc_theme'),btn=document.getElementById('theme-btn');if(s==='light'){document.documentElement.classList.add('light-mode');if(btn)btn.textContent='☀️';}})();
+
+/* ── TOAST ── */
+function toast(msg,type='ok',dur=3000){
+  const c=document.getElementById('toast-c'),el=document.createElement('div');
+  el.className='toast';
+  const col={ok:'#3cc878',err:'#ff4f5e',info:'#0ff4c6'}[type]||'#0ff4c6';
+  el.innerHTML=`<span style="color:${col}">${{ok:'✓',err:'✕',info:'↓'}[type]||'•'}</span><span style="flex:1">${msg}</span><div class="tbar" style="background:${col};animation-duration:${dur}ms"></div>`;
+  c.appendChild(el);setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),280)},dur);
+}
+
+/* ── VIEW SWITCH ── */
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  document.getElementById('scroll-area').scrollTop=0;
+  if(name==='changelog'&&!_clLoaded)loadChangelog();
+}
+
+/* ── UTILS ── */
+function fmtB(b){if(!b)return'0 B';const k=1024,s=['B','KB','MB'],i=Math.floor(Math.log(b)/Math.log(k));return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+s[i]}
+function fmtDate(s){if(!s)return'—';return new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function timeAgo(s){const d=(Date.now()-new Date(s))/1000;if(d<86400)return'today';if(d<604800)return Math.floor(d/86400)+'d ago';return fmtDate(s)}
+function eh(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function ea(s){return encodeURIComponent(s||'')}
+function cmpVer(a,b){const pa=a.replace(/[^0-9.]/g,'').split('.').map(Number),pb=b.replace(/[^0-9.]/g,'').split('.').map(Number);for(let i=0;i<Math.max(pa.length,pb.length);i++){const d=(pb[i]||0)-(pa[i]||0);if(d)return d;}return 0;}
+
+/* ── RELEASES ── */
+async function fetchReleases(){
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=50&_=${Date.now()}`);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const releases=await r.json();
+    const cm={},rm={},cbm={},rbm={};
+    releases.forEach(rel=>{
+      const date=fmtDate(rel.published_at);
+      const isNew=(Date.now()-new Date(rel.published_at))<7*24*3600*1000;
+      (rel.assets||[]).forEach(a=>{
+        const nm=a.name,lo=nm.toLowerCase();
+        if(!lo.endsWith('.rbxm'))return;
+        const isC=lo.includes('conch'),isR=lo.includes('cmdr');
+        if(!isC&&!isR)return;
+        const isBeta=lo.includes('beta');
+        const entry={name:nm,size:fmtB(a.size),date,version:rel.tag_name||rel.name||'v?',url:a.browser_download_url,ts:rel.published_at,isNew,isBeta};
+        const key=nm.replace(/[_\-]v[\d][\d.]*(?=\.rbxm$)/i,'').replace(/\.rbxm$/i,'').toLowerCase();
+        if(isC&&isBeta){if(!cbm[key])cbm[key]=[];cbm[key].push(entry);}
+        else if(isR&&isBeta){if(!rbm[key])rbm[key]=[];rbm[key].push(entry);}
+        else if(isC){if(!cm[key])cm[key]=[];cm[key].push(entry);}
+        else{if(!rm[key])rm[key]=[];rm[key].push(entry);}
+      });
+    });
+    const srt=map=>Object.values(map).forEach(arr=>arr.sort((a,b)=>cmpVer(a.version,b.version)));
+    srt(cm);srt(rm);srt(cbm);srt(rbm);
+    const toG=map=>Object.values(map).sort((a,b)=>cmpVer(a[0].version,b[0].version));
+    _cc=toG(cm);_cr=toG(rm);_ccb=toG(cbm);_crb=toG(rbm);
+    renderFiles('conch','conch-list',_cc,'c','🧩');
+    renderFiles('cmdr','cmdr-list',_cr,'r','⚔️');
+    renderBetaFiles('conch-beta-list',_ccb,'bc','🧪','conch-beta-section');
+    renderBetaFiles('cmdr-beta-list',_crb,'br','🔬','cmdr-beta-section');
+    document.getElementById('badge-conch').textContent=_cc.length;
+    document.getElementById('badge-cmdr').textContent=_cr.length;
+  }catch(e){
+    document.getElementById('conch-list').innerHTML='<div class="empty-state"><span class="empty-icon">❌</span>Failed to load files.</div>';
+    document.getElementById('cmdr-list').innerHTML='';
+  }
+}
+
+function renderFiles(sec,listId,groups,cls,ico){
+  const list=document.getElementById(listId);
+  list.innerHTML='';
+  if(!groups.length){list.innerHTML='<div class="empty-state"><span class="empty-icon">📭</span>No files found.</div>';return;}
+  groups.forEach(vers=>{
+    const latest=vers[0];
+    const el=document.createElement('div');
+    el.className='file-card';
+    el.dataset.name=latest.name.toLowerCase();
+    el.innerHTML=`
+      <div class="file-card-main">
+        <div class="file-icon ${cls}">${ico}</div>
+        <div class="file-info">
+          <div class="file-name">${eh(latest.name)}</div>
+          <div class="file-meta">
+            <span class="file-ver ${cls}">${eh(latest.version)}</span>
+            <span>${latest.size}</span><span>·</span><span>${latest.date}</span>
+            ${latest.isNew?'<span class="badge-new">NEW</span>':''}
+          </div>
+        </div>
+        <button class="dl-btn ${cls}" onclick="dlFile('${ea(latest.url)}','${ea(latest.name)}',this,'${cls}')">↓</button>
+      </div>
+      <div class="dl-progress"><div class="dl-bar ${cls}" id="dlbar-${++_uid}"></div></div>`;
+    /* Store bar id on button */
+    el.querySelector('.dl-btn').dataset.bar='dlbar-'+_uid;
+    list.appendChild(el);
+  });
+}
+
+function renderBetaFiles(listId,groups,cls,ico,sectionId){
+  const section=document.getElementById(sectionId);
+  const list=document.getElementById(listId);
+  if(!groups.length){section.style.display='none';return;}
+  section.style.display='block';
+  list.innerHTML='';
+  groups.forEach(vers=>{
+    const latest=vers[0];
+    const el=document.createElement('div');
+    el.className='file-card';
+    el.dataset.name=latest.name.toLowerCase();
+    el.innerHTML=`
+      <div class="file-card-main">
+        <div class="file-icon ${cls}">${ico}</div>
+        <div class="file-info">
+          <div class="file-name">${eh(latest.name)}</div>
+          <div class="file-meta">
+            <span class="file-ver ${cls}">${eh(latest.version)}</span>
+            <span class="badge-beta">BETA</span>
+            <span>${latest.size}</span><span>·</span><span>${latest.date}</span>
+          </div>
+        </div>
+        <button class="dl-btn ${cls}" onclick="dlFile('${ea(latest.url)}','${ea(latest.name)}',this,'${cls}')">↓</button>
+      </div>
+      <div class="dl-progress"><div class="dl-bar ${cls}" id="dlbar-${++_uid}"></div></div>`;
+    el.querySelector('.dl-btn').dataset.bar='dlbar-'+_uid;
+    list.appendChild(el);
+  });
+}
+
+/* ── DOWNLOAD ── */
+async function dlFile(url,name,btn,cls){
+  const barId=btn.dataset.bar;
+  const bar=barId?document.getElementById(barId):null;
+  btn.textContent='…';btn.disabled=true;
+  toast('↓ Downloading '+decodeURIComponent(name),'info',3000);
+  try{
+    const r=await fetch(decodeURIComponent(url));
+    if(!r.ok)throw new Error();
+    const total=parseInt(r.headers.get('content-length')||'0');
+    const reader=r.body.getReader();const chunks=[];let received=0;
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      chunks.push(value);received+=value.length;
+      if(total>0&&bar)bar.style.width=Math.round((received/total)*100)+'%';
+    }
+    const blob=new Blob(chunks);
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=decodeURIComponent(name);document.body.appendChild(a);a.click();document.body.removeChild(a);
+    if(bar){bar.style.width='100%';setTimeout(()=>{bar.style.width='0%';},600);}
+    toast('✓ Downloaded!','ok',2500);
+  }catch{
+    /* Fallback */
+    const a=document.createElement('a');a.href=decodeURIComponent(url);a.download=decodeURIComponent(name);a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('✓ Download started','ok',2000);
+  }
+  btn.textContent='↓';btn.disabled=false;
+}
+
+/* ── SEARCH ── */
+function doSearch(q){
+  const lq=q.toLowerCase();
+  document.querySelectorAll('#view-downloads .file-card').forEach(el=>{
+    el.style.display=(!lq||el.dataset.name.includes(lq))?'':'none';
+  });
+}
+
+/* ── CHANGELOG ── */
+let _clLoaded=false;
+async function loadChangelog(){
+  _clLoaded=true;
+  const list=document.getElementById('changelog-list');
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=30&_=${Date.now()}`);
+    const releases=await r.json();
+    if(!releases.length){list.innerHTML='<div class="empty-state"><span class="empty-icon">📭</span>No releases yet.</div>';return;}
+
+    function classifyAsset(name){
+      const lo=name.toLowerCase();
+      const isC=lo.includes('conch'),isR=lo.includes('cmdr'),isBeta=lo.includes('beta');
+      if(isC&&isBeta)return'bc';if(isR&&isBeta)return'br';if(isC)return'c';if(isR)return'r';return'other';
+    }
+    function releaseType(assets){
+      const types=new Set(assets.filter(a=>a.name.toLowerCase().endsWith('.rbxm')).map(a=>classifyAsset(a.name)));
+      if(types.has('c')&&types.size===1)return'c';
+      if(types.has('r')&&types.size===1)return'r';
+      if(types.has('bc')&&types.size===1)return'bc';
+      if(types.has('br')&&types.size===1)return'br';
+      return[...types][0]||'c';
+    }
+    const dotMap={c:'dc',r:'dr',bc:'dbc',br:'dbr'};
+    const cardMap={c:'tc',r:'tr',bc:'tbc',br:'tbr'};
+    const icons={c:'🧩',r:'⚔️',bc:'🧪',br:'🔬'};
+    const labels={c:'Conch',r:'Cmdr',bc:'Conch Beta',br:'Cmdr Beta'};
+
+    list.innerHTML=releases.map((rel,idx)=>{
+      const assets=(rel.assets||[]).filter(a=>a.name.toLowerCase().endsWith('.rbxm'));
+      const type=releaseType(rel.assets||[]);
+      const tag=rel.tag_name||rel.name||'v?';
+      const body=rel.body||'';
+      const assetHTML=assets.map(a=>`<a class="cl-asset" href="${eh(a.browser_download_url)}" download="${eh(a.name)}">↓ ${eh(a.name)}</a>`).join('');
+      const hasNotes=!!body.trim();
+      return `<div class="cl-item">
+        <div class="cl-dot ${dotMap[type]||'dc'}">${icons[type]||'📦'}</div>
+        <div class="cl-card ${cardMap[type]||'tc'}">
+          <div class="cl-head">
+            <div class="cl-title-row">
+              <span class="cl-ver">${eh(tag)}</span>
+              <span class="cl-type ${type}">${labels[type]||'Release'}</span>
+              ${(Date.now()-new Date(rel.published_at))<7*24*3600*1000?'<span class="badge-new">NEW</span>':''}
+            </div>
+            <span class="cl-date">${timeAgo(rel.published_at)}</span>
+          </div>
+          ${assets.length?`<div class="cl-assets">${assetHTML}</div>`:''}
+          ${hasNotes?`<button class="cl-notes-btn" onclick="toggleNotes(this)">📝 Release Notes <span style="margin-left:auto">▾</span></button><div class="cl-notes-body"><div class="cl-notes-inner">${eh(body.trim())}</div></div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    list.innerHTML='<div class="empty-state"><span class="empty-icon">❌</span>Failed to load changelog.</div>';
+  }
+}
+
+function toggleNotes(btn){
+  const body=btn.nextElementSibling;
+  if(!body)return;
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  btn.querySelector('span:last-child').textContent=isOpen?'▾':'▴';
+}
+
+/* ── BUG REPORT ── */
+async function submitBug(){
+  const title=document.getElementById('br-title').value.trim();
+  const desc=document.getElementById('br-desc').value.trim();
+  const cat=document.getElementById('br-cat').value;
+  const name=document.getElementById('br-name').value.trim()||'Anonymous';
+  const errEl=document.getElementById('br-err');
+  const okEl=document.getElementById('br-ok');
+  const btn=document.getElementById('br-submit');
+  errEl.classList.remove('vis');okEl.classList.remove('vis');
+
+  if(!title){errEl.textContent='Please enter a title.';errEl.classList.add('vis');return;}
+  if(!desc){errEl.textContent='Please describe the bug.';errEl.classList.add('vis');return;}
+
+  btn.disabled=true;btn.textContent='Sending...';
+
+  try{
+    const ip=await fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(d=>d.ip).catch(()=>'unknown');
+
+    /* Discord webhook */
+    await fetch(DISCORD_WEBHOOK,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        embeds:[{
+          title:'🐛 New Bug Report — '+eh(title),
+          color:0xff4f5e,
+          fields:[
+            {name:'📂 Category',value:cat,inline:true},
+            {name:'👤 Reporter',value:name,inline:true},
+            {name:'📝 Description',value:desc.slice(0,1000)},
+          ],
+          footer:{text:'Conch & Cmdr App · '+new Date().toLocaleString()},
+        }]
+      })
+    });
+
+    /* Supabase log */
+    await fetch(SB_URL+'/rest/v1/cc_bug_reports',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({title,description:desc,category:cat,reporter_name:name,ip,created_at:new Date().toISOString()})
+    }).catch(()=>{});
+
+    okEl.classList.add('vis');
+    document.getElementById('br-title').value='';
+    document.getElementById('br-desc').value='';
+    document.getElementById('br-name').value='';
+    btn.textContent='📤 Send Report';
+    setTimeout(()=>btn.disabled=false,3000);
+  }catch(e){
+    errEl.textContent='Failed to send. Please try again.';errEl.classList.add('vis');
+    btn.disabled=false;btn.textContent='📤 Send Report';
+  }
+}
+
+/* ── INIT ── */
+fetchReleases();
+</script>
+</body>
+</html>
